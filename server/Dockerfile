@@ -29,6 +29,9 @@ RUN npm install --omit=dev
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy public folder
+COPY public ./public
+
 # Expose port
 EXPOSE 4000
 
