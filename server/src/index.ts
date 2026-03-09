@@ -254,20 +254,55 @@ function getKeywordHistory(): any[] {
 // Parse CSV content
 function parseCSV(csvText: string): any[] {
   const keywords: any[] = [];
+
+  // Remove UTF-16 BOM if present and convert to UTF-8
+  if (csvText.charCodeAt(0) === 0xFEFF) {
+    csvText = csvText.slice(1);
+  }
+
+  // Handle UTF-16 encoded content (Google Ads exports)
+  // UTF-16 files have null bytes between ASCII characters
+  if (csvText.includes('\0')) {
+    // Convert UTF-16 LE to UTF-8 by removing null bytes between characters
+    csvText = csvText.replace(/\0/g, '');
+  }
+
   const lines = csvText.split(/\r?\n/);
 
   if (lines.length < 2) {
     return keywords;
   }
 
-  const header = parseCSVLine(lines[0]);
+  // Find the header line (line with "Keyword" column)
+  // Google Ads files may have metadata rows at the beginning
+  let headerLineIndex = 0;
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const line = lines[i].toLowerCase();
+    if (line.includes('keyword') && (line.includes('search') || line.includes('competition'))) {
+      headerLineIndex = i;
+      break;
+    }
+  }
+
+  const header = parseCSVLine(lines[headerLineIndex]);
+
+  // Log header for debugging
+  console.log('[CSV] Header columns:', header.map(h => h.trim()).join(' | '));
 
   const keywordIndex = header.findIndex(h =>
     h.toLowerCase().includes('keyword') || h.toLowerCase().includes('kata kunci')
   );
-  const searchVolumeIndex = header.findIndex(h =>
-    h.toLowerCase().includes('search') || h.toLowerCase().includes('monthly') || h.toLowerCase().includes('penelusuran')
-  );
+
+  // Search for "Ave. monthly searches" or similar column names
+  const searchVolumeIndex = header.findIndex(h => {
+    const lower = h.toLowerCase();
+    return lower.includes('monthly') ||
+           lower.includes('search') ||
+           lower.includes('penelusuran') ||
+           lower.includes('avg.') ||
+           lower.includes('ave.');
+  });
+
   const competitionIndex = header.findIndex(h =>
     h.toLowerCase().includes('competition') || h.toLowerCase().includes('persaingan')
   );
@@ -278,19 +313,29 @@ function parseCSV(csvText: string): any[] {
     h.toLowerCase().includes('max') || h.toLowerCase().includes('high')
   );
 
-  for (let i = 1; i < lines.length; i++) {
+  console.log(`[CSV] Column indices - Keyword: ${keywordIndex}, SearchVolume: ${searchVolumeIndex}, Competition: ${competitionIndex}`);
+
+  // Start from line after header
+  for (let i = headerLineIndex + 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
     const cells = parseCSVLine(line);
     if (cells.length < 1 || !cells[0]) continue;
 
+    // Skip metadata rows (rows that don't have keyword as first meaningful column)
+    const keywordValue = cells[keywordIndex] || cells[0];
+    if (!keywordValue || keywordValue.trim() === '') continue;
+
     const keywordData: any = {
-      keyword: cells[keywordIndex] || cells[0]
+      keyword: keywordValue.trim()
     };
 
+    // Parse search volume if column found
     if (searchVolumeIndex > -1 && cells[searchVolumeIndex]) {
-      keywordData.monthlySearches = parseSearchVolume(cells[searchVolumeIndex]);
+      const volume = parseSearchVolume(cells[searchVolumeIndex]);
+      keywordData.monthlySearches = volume;
+      console.log(`[CSV] Keyword: ${keywordData.keyword}, Volume: ${volume} (raw: "${cells[searchVolumeIndex]}")`);
     }
 
     if (competitionIndex > -1 && cells[competitionIndex]) {
@@ -311,6 +356,7 @@ function parseCSV(csvText: string): any[] {
     }
   }
 
+  console.log(`[CSV] Parsed ${keywords.length} keywords, ${keywords.filter(k => k.monthlySearches && k.monthlySearches > 0).length} with volume`);
   return keywords;
 }
 
@@ -464,7 +510,24 @@ app.post("/api/keywords/upload", requireAuth, upload.single('csv'), (req: expres
     }
 
     const filename = req.file.originalname;
-    const csvContent = req.file.buffer.toString('utf-8');
+    // Detect encoding: UTF-16 LE (Google Ads) or UTF-8
+    const buffer = req.file.buffer;
+    let csvContent: string;
+
+    // Check for UTF-16 LE BOM (FF FE) or UTF-16 BE BOM (FE FF)
+    if (buffer.length >= 2 && buffer[0] === 0xFF && buffer[1] === 0xFE) {
+      // UTF-16 LE
+      csvContent = buffer.toString('utf16le');
+      console.log('[Upload] Detected UTF-16 LE encoding');
+    } else if (buffer.length >= 2 && buffer[0] === 0xFE && buffer[1] === 0xFF) {
+      // UTF-16 BE - need to swap bytes
+      csvContent = buffer.swap16().toString('utf16le');
+      console.log('[Upload] Detected UTF-16 BE encoding');
+    } else {
+      // Default to UTF-8
+      csvContent = buffer.toString('utf-8');
+      console.log('[Upload] Detected UTF-8 encoding');
+    }
 
     const keywords = parseCSV(csvContent);
 
