@@ -101,23 +101,43 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: [/\.modalhp\.com$/, /localhost(:\d+)?$/, /127\.0\.0\.1(:\d+)?$/],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Trust proxy for reverse proxy setup (needed for secure cookies behind proxy)
+app.set('trust proxy', 1);
 
 // Session middleware
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  proxy: true, // Trust reverse proxy for secure cookies
   cookie: {
-    secure: process.env.NODE_ENV === "production", // true in production with HTTPS
+    secure: true, // Always use secure cookies (HTTPS)
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax',
+    path: '/'
   }
 }));
+
+// Log session creation for debugging
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  res.send = function(body: any) {
+    if (req.path.startsWith('/api/auth/')) {
+      console.log(`[Debug] ${req.method} ${req.path} - Session ID: ${req.sessionID}, User ID: ${req.session?.userId || 'none'}`);
+    }
+    return originalSend.call(this, body);
+  };
+  next();
+});
 
 // Multer configuration for file uploads
 const storage = multer.memoryStorage();
