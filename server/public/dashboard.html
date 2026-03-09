@@ -248,6 +248,390 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* Keywords Browser Styles */
+    .keywords-section {
+      margin-top: 24px;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-group label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .filter-input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 150px;
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #1a73e8;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1557b0;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-outline {
+      background: white;
+      border: 1px solid #ddd;
+      color: #333;
+    }
+
+    .btn-outline:hover {
+      background: #f8f9fa;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .keywords-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .keywords-table th,
+    .keywords-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .keywords-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #555;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .keywords-table th:hover {
+      background: #e9ecef;
+    }
+
+    .keywords-table th.sort-asc::after {
+      content: ' ▲';
+    }
+
+    .keywords-table th.sort-desc::after {
+      content: ' ▼';
+    }
+
+    .keywords-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .volume-high {
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .volume-medium {
+      color: #ffc107;
+      font-weight: 600;
+    }
+
+    .volume-low {
+      color: #6c757d;
+    }
+
+    .volume-none {
+      color: #ccc;
+    }
+
+    .change-positive {
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .change-negative {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .change-neutral {
+      color: #6c757d;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .pagination button {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: #1a73e8;
+      color: white;
+      border-color: #1a73e8;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination .page-info {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-item .label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .stat-item .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a73e8;
+    }
+
+    .stat-item .value.warning {
+      color: #ffc107;
+    }
+
+    .stat-item .value.success {
+      color: #28a745;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .modal-header h3 {
+      font-size: 18px;
+      color: #333;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #888;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .modal-body {
+      margin-bottom: 20px;
+    }
+
+    .modal-body p {
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .column-list {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .column-list h4 {
+      font-size: 14px;
+      color: #555;
+      margin: 0 0 12px 0;
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .column-item:last-child {
+      border-bottom: none;
+    }
+
+    .column-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .column-item label {
+      cursor: pointer;
+      flex: 1;
+      color: #333;
+    }
+
+    .column-item .column-desc {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .btn-warning {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-warning:hover {
+      background: #c82333;
+    }
+
+    .warning-text {
+      color: #dc3545;
+      font-weight: 600;
+      background: #fce8e7;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #f5c6cb;
+      margin-bottom: 16px;
+    }
+
+    .download-option {
+      margin-top: 16px;
+      padding: 16px;
+      background: #e8f0fe;
+      border-radius: 8px;
+      border: 1px solid #b3d1ff;
+    }
+
+    .download-option h4 {
+      font-size: 14px;
+      color: #1a73e8;
+      margin: 0 0 12px 0;
+    }
   </style>
 </head>
 <body>
@@ -290,6 +674,92 @@
       <div id="uploadStatus" class="alert"></div>
     </div>
 
+    <!-- Keywords Browser Section -->
+    <div class="section keywords-section">
+      <h2 class="section-title">🔍 Keywords Browser</h2>
+
+      <div class="stats-bar" id="keywordsStats">
+        <div class="stat-item">
+          <div class="label">Total Keywords</div>
+          <div class="value" id="kwTotal">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">With Volume</div>
+          <div class="value success" id="kwWithVolume">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">Without Volume</div>
+          <div class="value" id="kwWithoutVolume">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">Duplicates Found</div>
+          <div class="value warning" id="kwDuplicates">0</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="searchKeyword">Search</label>
+          <input type="text" id="searchKeyword" class="filter-input" placeholder="Enter keyword...">
+        </div>
+
+        <div class="filter-group">
+          <label for="filterVolume">Min Volume</label>
+          <input type="number" id="filterVolume" class="filter-input" placeholder="0" min="0">
+        </div>
+
+        <div class="filter-group">
+          <label for="filterHasVolume">Filter</label>
+          <select id="filterHasVolume" class="filter-input">
+            <option value="">All Keywords</option>
+            <option value="true">Has Volume Only</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="sortBy">Sort By</label>
+          <select id="sortBy" class="filter-input">
+            <option value="volume">Search Volume</option>
+            <option value="keyword">Keyword (A-Z)</option>
+            <option value="competition">Competition</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="sortOrder">Order</label>
+          <select id="sortOrder" class="filter-input">
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </div>
+
+        <div class="filter-group" style="justify-content: flex-end;">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+        </div>
+
+        <div class="filter-group" style="justify-content: flex-end;">
+          <label>&nbsp;</label>
+          <button class="btn btn-danger" onclick="deduplicateKeywords()">🗑️ Remove Duplicates</button>
+        </div>
+
+        <div class="filter-group" style="justify-content: flex-end;">
+          <label>&nbsp;</label>
+          <button class="btn btn-warning" onclick="showDeleteAllModal()">🗑️ Delete All Keywords</button>
+        </div>
+      </div>
+
+      <div id="keywordsContainer">
+        <div class="loading"><span class="spinner"></span>Loading keywords...</div>
+      </div>
+
+      <div class="pagination" id="pagination" style="display: none;">
+        <button onclick="changePage(-1)" id="prevBtn">Previous</button>
+        <span class="page-info" id="pageInfo">Page 1 of 1</span>
+        <button onclick="changePage(1)" id="nextBtn">Next</button>
+      </div>
+    </div>
+
     <!-- History Section -->
     <div class="section">
       <h2 class="section-title">📜 Upload History</h2>
@@ -297,6 +767,62 @@
 
       <div id="historyContainer">
         <div class="loading"><span class="spinner"></span>Loading history...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete All Keywords Modal -->
+  <div class="modal-overlay" id="deleteModal" onclick="closeDeleteModal(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Delete All Keywords</h3>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="warning-text">
+          ⚠️ This action will permanently delete all keywords from the database.
+        </div>
+        <p>Before deleting, you can download the keywords with selected columns:</p>
+
+        <div class="download-option">
+          <h4>📥 Download Options</h4>
+          <div class="column-list">
+            <h4>Select columns to include in download:</h4>
+            <div class="column-item">
+              <input type="checkbox" id="col-keyword" checked>
+              <label for="col-keyword">Keyword</label>
+            </div>
+            <div class="column-item">
+              <input type="checkbox" id="col-volume" checked>
+              <label for="col-volume">Monthly Searches (Volume)</label>
+            </div>
+            <div class="column-item">
+              <input type="checkbox" id="col-threeMonth" checked>
+              <label for="col-threeMonth">3 Month Change</label>
+            </div>
+            <div class="column-item">
+              <input type="checkbox" id="col-yoy" checked>
+              <label for="col-yoy">YoY Change</label>
+            </div>
+            <div class="column-item">
+              <input type="checkbox" id="col-competition" checked>
+              <label for="col-competition">Competition</label>
+            </div>
+            <div class="column-item">
+              <input type="checkbox" id="col-lowBid" checked>
+              <label for="col-lowBid">Low Top Page Bid</label>
+            </div>
+            <div class="column-item">
+              <input type="checkbox" id="col-highBid" checked>
+              <label for="col-highBid">High Top Page Bid</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="downloadAndDelete()">Download & Delete</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Delete All</button>
       </div>
     </div>
   </div>
@@ -503,6 +1029,283 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    // Keywords Browser
+    let currentPage = 1;
+    let currentFilters = {};
+
+    // Load keywords on page load
+    loadKeywords();
+
+    async function loadKeywords() {
+      const container = document.getElementById('keywordsContainer');
+      container.innerHTML = '<div class="loading"><span class="spinner"></span>Loading keywords...</div>';
+
+      try {
+        const params = new URLSearchParams();
+        params.set('page', currentPage);
+        params.set('pageSize', '50');
+
+        if (currentFilters.search) params.set('search', currentFilters.search);
+        if (currentFilters.minVolume) params.set('minVolume', currentFilters.minVolume);
+        if (currentFilters.hasVolume) params.set('hasVolume', currentFilters.hasVolume);
+        if (currentFilters.sortBy) params.set('sortBy', currentFilters.sortBy);
+        if (currentFilters.sortOrder) params.set('sortOrder', currentFilters.sortOrder);
+
+        const res = await fetch(`/api/keywords?${params}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load keywords');
+
+        const data = await res.json();
+
+        // Update stats
+        document.getElementById('kwTotal').textContent = data.stats.total.toLocaleString();
+        document.getElementById('kwWithVolume').textContent = data.stats.withVolume.toLocaleString();
+        document.getElementById('kwWithoutVolume').textContent = data.stats.withoutVolume.toLocaleString();
+        document.getElementById('kwDuplicates').textContent = data.stats.duplicates.toLocaleString();
+
+        if (data.keywords && data.keywords.length > 0) {
+          let html = `
+            <table class="keywords-table">
+              <thead>
+                <tr>
+                  <th>Keyword</th>
+                  <th>Monthly Searches</th>
+                  <th>3 Month Change</th>
+                  <th>YoY Change</th>
+                  <th>Competition</th>
+                  <th>Low Bid</th>
+                  <th>High Bid</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+          for (const kw of data.keywords) {
+            const volume = kw.monthlySearches || 0;
+            const volumeClass = volume >= 1000 ? 'volume-high' : volume >= 100 ? 'volume-medium' : volume > 0 ? 'volume-low' : 'volume-none';
+
+            // Format percentage with + sign for positive values
+            const formatPercent = (val) => {
+              if (val === null || val === undefined || isNaN(val)) return '<span class="change-neutral">-</span>';
+              const num = typeof val === 'string' ? parseFloat(val) : val;
+              if (isNaN(num)) return '<span class="change-neutral">-</span>';
+              const sign = num >= 0 ? '+' : '';
+              const cls = num > 0 ? 'change-positive' : num < 0 ? 'change-negative' : 'change-neutral';
+              return `<span class="${cls}">${sign}${num.toFixed(0)}%</span>`;
+            };
+
+            // Format currency IDR
+            const formatCurrency = (val) => {
+              if (!val || val <= 0) return '-';
+              return 'Rp' + val.toLocaleString('id-ID');
+            };
+
+            // Format competition index to label
+            const formatCompetition = (comp, compIndex) => {
+              if (!comp) return '-';
+              const lower = comp.toLowerCase();
+              if (lower.includes('rendah') || lower.includes('low')) return 'Rendah';
+              if (lower.includes('sedang') || lower.includes('medium')) return 'Sedang';
+              if (lower.includes('tinggi') || lower.includes('high')) return 'Tinggi';
+              return comp;
+            };
+
+            html += `
+              <tr>
+                <td><strong>${escapeHtml(kw.keyword)}</strong></td>
+                <td class="${volumeClass}">${volume > 0 ? volume.toLocaleString('id-ID') : '-'}</td>
+                <td>${formatPercent(kw.threeMonthChange)}</td>
+                <td>${formatPercent(kw.yoyChange)}</td>
+                <td class="${kw.competitionIndex >= 70 ? 'volume-high' : kw.competitionIndex >= 40 ? 'volume-medium' : 'volume-low'}">${formatCompetition(kw.competition, kw.competitionIndex)}</td>
+                <td>${kw.lowTopPageBid && kw.lowTopPageBid > 0 ? formatCurrency(kw.lowTopPageBid) : '-'}</td>
+                <td>${kw.highTopPageBid && kw.highTopPageBid > 0 ? formatCurrency(kw.highTopPageBid) : '-'}</td>
+              </tr>
+            `;
+          }
+
+          html += '</tbody></table>';
+          container.innerHTML = html;
+
+          // Update pagination
+          const pagination = document.getElementById('pagination');
+          document.getElementById('pageInfo').textContent = `Page ${data.pagination.page} of ${data.pagination.totalPages}`;
+          document.getElementById('prevBtn').disabled = data.pagination.page <= 1;
+          document.getElementById('nextBtn').disabled = !data.pagination.hasMore;
+          pagination.style.display = 'flex';
+        } else {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <p>No keywords found. Try adjusting your filters or upload a CSV file.</p>
+            </div>
+          `;
+          document.getElementById('pagination').style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error loading keywords:', error);
+        container.innerHTML = '<div class="empty-state">Failed to load keywords</div>';
+        document.getElementById('pagination').style.display = 'none';
+      }
+    }
+
+    function applyFilters() {
+      const search = document.getElementById('searchKeyword').value.trim();
+      const minVolume = document.getElementById('filterVolume').value;
+      const hasVolume = document.getElementById('filterHasVolume').value;
+      const sortBy = document.getElementById('sortBy').value;
+      const sortOrder = document.getElementById('sortOrder').value;
+
+      currentFilters = {
+        search: search || '',
+        minVolume: minVolume ? parseInt(minVolume) : 0,
+        hasVolume: hasVolume || '',
+        sortBy: sortBy,
+        sortOrder: sortOrder
+      };
+
+      currentPage = 1;
+      loadKeywords();
+    }
+
+    function changePage(delta) {
+      currentPage += delta;
+      if (currentPage < 1) currentPage = 1;
+      loadKeywords();
+    }
+
+    async function deduplicateKeywords() {
+      if (!confirm('Are you sure you want to remove duplicate keywords? This will create a new deduplicated file.')) {
+        return;
+      }
+
+      const container = document.getElementById('keywordsContainer');
+      container.innerHTML = '<div class="loading"><span class="spinner"></span>Removing duplicates...</div>';
+
+      try {
+        const res = await fetch('/api/keywords/deduplicate', {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          alert(`✅ Success! Removed ${data.duplicatesRemoved} duplicate keywords.\n\nOriginal: ${data.originalCount} keywords\nDeduplicated: ${data.deduplicatedCount} keywords`);
+          currentPage = 1;
+          loadKeywords();
+          loadStats();
+        } else {
+          alert(`❌ Error: ${data.error}`);
+          loadKeywords();
+        }
+      } catch (error) {
+        alert(`❌ Error: ${error.message}`);
+        loadKeywords();
+      }
+    }
+
+    // Add Enter key handler for search
+    document.getElementById('searchKeyword')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') applyFilters();
+    });
+
+    document.getElementById('filterVolume')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') applyFilters();
+    });
+
+    // Delete All Keywords Modal Functions
+    function showDeleteModal() {
+      document.getElementById('deleteModal').classList.add('active');
+    }
+
+    function closeDeleteModal(event) {
+      if (!event || event.target === document.getElementById('deleteModal')) {
+        document.getElementById('deleteModal').classList.remove('active');
+      }
+    }
+
+    function getSelectedColumns() {
+      const columns = [];
+      if (document.getElementById('col-keyword').checked) columns.push('keyword');
+      if (document.getElementById('col-volume').checked) columns.push('monthlySearches');
+      if (document.getElementById('col-threeMonth').checked) columns.push('threeMonthChange');
+      if (document.getElementById('col-yoy').checked) columns.push('yoyChange');
+      if (document.getElementById('col-competition').checked) columns.push('competition');
+      if (document.getElementById('col-lowBid').checked) columns.push('lowTopPageBid');
+      if (document.getElementById('col-highBid').checked) columns.push('highTopPageBid');
+      return columns;
+    }
+
+    async function downloadAndDelete() {
+      const columns = getSelectedColumns();
+      if (columns.length === 0) {
+        alert('Please select at least one column to download');
+        return;
+      }
+
+      try {
+        // First, download the keywords with selected columns
+        const res = await fetch('/api/keywords/download', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ columns })
+        });
+
+        if (!res.ok) throw new Error('Failed to download keywords');
+
+        // Get the blob and download
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `keywords-backup-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        // Then delete all keywords
+        await deleteAllKeywords();
+
+        closeDeleteModal();
+      } catch (error) {
+        alert(`❌ Error: ${error.message}`);
+      }
+    }
+
+    async function confirmDelete() {
+      if (!confirm('Are you sure you want to delete ALL keywords? This action cannot be undone!')) {
+        return;
+      }
+      await deleteAllKeywords();
+      closeDeleteModal();
+    }
+
+    async function deleteAllKeywords() {
+      try {
+        const res = await fetch('/api/keywords/delete-all', {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          alert(`✅ Successfully deleted ${data.deletedCount || 0} keywords.`);
+          // Reload stats and keywords
+          loadStats();
+          loadKeywords();
+          loadHistory();
+        } else {
+          alert(`❌ Error: ${data.error}`);
+        }
+      } catch (error) {
+        alert(`❌ Error: ${error.message}`);
+      }
     }
 
     // Initial load

@@ -112,6 +112,9 @@ app.use(express.urlencoded({ extended: true }));
 // Trust proxy for reverse proxy setup (needed for secure cookies behind proxy)
 app.set('trust proxy', 1);
 
+// Detect if running locally (for HTTP testing)
+const isLocalhost = process.env.NODE_ENV !== 'production' || process.env.ALLOW_INSECURE === 'true';
+
 // Session middleware
 app.use(session({
   secret: SESSION_SECRET,
@@ -119,13 +122,33 @@ app.use(session({
   saveUninitialized: false,
   proxy: true, // Trust reverse proxy for secure cookies
   cookie: {
-    secure: true, // Always use secure cookies (HTTPS)
+    secure: !isLocalhost, // Use secure cookies in production (HTTPS), allow HTTP for local testing
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'lax',
     path: '/'
   }
 }));
+
+// Log ALL requests for debugging
+app.use((req, res, next) => {
+  const start = Date.now();
+  process.stdout.write(`[Request] ${req.method} ${req.path} - Start\n`);
+
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const logMsg = `[Request] ${req.method} ${req.path} - ${res.statusCode} in ${duration}ms\n`;
+    process.stdout.write(logMsg);
+    // Also write to file
+    try {
+      fs.appendFileSync(path.join(DATA_DIR, 'requests.log'), `${new Date().toISOString()} - ${logMsg}`);
+    } catch (e) {
+      // Ignore file errors
+    }
+  });
+
+  next();
+});
 
 // Log session creation for debugging
 app.use((req, res, next) => {
@@ -255,9 +278,13 @@ function getKeywordHistory(): any[] {
 function parseCSV(csvText: string): any[] {
   const keywords: any[] = [];
 
+  // Debug: Log about the input
+  console.log('[parseCSV] Input length:', csvText.length, 'hasTabs:', csvText.includes('\t'), 'hasNulls:', csvText.includes('\0'));
+
   // Remove UTF-16 BOM if present and convert to UTF-8
   if (csvText.charCodeAt(0) === 0xFEFF) {
     csvText = csvText.slice(1);
+    console.log('[parseCSV] Removed UTF-16 BOM');
   }
 
   // Handle UTF-16 encoded content (Google Ads exports)
@@ -265,6 +292,7 @@ function parseCSV(csvText: string): any[] {
   if (csvText.includes('\0')) {
     // Convert UTF-16 LE to UTF-8 by removing null bytes between characters
     csvText = csvText.replace(/\0/g, '');
+    console.log('[parseCSV] Removed null bytes');
   }
 
   const lines = csvText.split(/\r?\n/);
@@ -287,7 +315,9 @@ function parseCSV(csvText: string): any[] {
   const header = parseCSVLine(lines[headerLineIndex]);
 
   // Log header for debugging
+  console.log('[CSV] Header length:', header.length);
   console.log('[CSV] Header columns:', header.map(h => h.trim()).join(' | '));
+  console.log('[CSV] First 5 elements:', header.slice(0, 5).map(h => `"${h.trim()}"`).join(', '));
 
   const keywordIndex = header.findIndex(h =>
     h.toLowerCase().includes('keyword') || h.toLowerCase().includes('kata kunci')
@@ -306,14 +336,27 @@ function parseCSV(csvText: string): any[] {
   const competitionIndex = header.findIndex(h =>
     h.toLowerCase().includes('competition') || h.toLowerCase().includes('persaingan')
   );
-  const minBidIndex = header.findIndex(h =>
-    h.toLowerCase().includes('min') || h.toLowerCase().includes('low')
-  );
-  const maxBidIndex = header.findIndex(h =>
-    h.toLowerCase().includes('max') || h.toLowerCase().includes('high')
+
+  // Three month change column
+  const threeMonthChangeIndex = header.findIndex(h =>
+    h.toLowerCase().includes('three month') || h.toLowerCase().includes('3 month')
   );
 
-  console.log(`[CSV] Column indices - Keyword: ${keywordIndex}, SearchVolume: ${searchVolumeIndex}, Competition: ${competitionIndex}`);
+  // YoY change column
+  const yoyChangeIndex = header.findIndex(h =>
+    h.toLowerCase().includes('yoy') || h.toLowerCase().includes('year over year')
+  );
+
+  // Top of page bid (low range) - look for exact column name
+  const minBidIndex = header.findIndex(h =>
+    h.toLowerCase().includes('top of page') && h.toLowerCase().includes('low')
+  );
+  // Top of page bid (high range) - look for exact column name
+  const maxBidIndex = header.findIndex(h =>
+    h.toLowerCase().includes('top of page') && h.toLowerCase().includes('high')
+  );
+
+  console.log(`[CSV] Column indices - Keyword: ${keywordIndex}, SearchVolume: ${searchVolumeIndex}, Competition: ${competitionIndex}, 3Month: ${threeMonthChangeIndex}, YoY: ${yoyChangeIndex}, LowBid: ${minBidIndex}, HighBid: ${maxBidIndex}`);
 
   // Start from line after header
   for (let i = headerLineIndex + 1; i < lines.length; i++) {
@@ -325,17 +368,42 @@ function parseCSV(csvText: string): any[] {
 
     // Skip metadata rows (rows that don't have keyword as first meaningful column)
     const keywordValue = cells[keywordIndex] || cells[0];
+
+    // Skip empty keywords, metadata rows (total rows starting with "Semua", "Indonesia", etc.)
     if (!keywordValue || keywordValue.trim() === '') continue;
+    if (keywordValue.toLowerCase().startsWith('semua') ||
+        keywordValue.toLowerCase().startsWith('indonesia') ||
+        keywordValue.toLowerCase().includes('segmentation')) continue;
+
+    // Skip rows that are monthly data (Sep 2025, Oct 2025, etc) - these have dates in first column
+    if (/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(keywordValue)) continue;
+    if (/searches:/i.test(keywordValue)) continue;
+
+    // Only include keywords that have a valid keyword (not just numbers or dates)
+    // Valid keywords should have at least 2 characters and contain letters
+    const trimmedKeyword = keywordValue.trim();
+    if (trimmedKeyword.length < 2 || !/[a-zA-Z\u00C0-\u017F]/.test(trimmedKeyword)) {
+      continue;
+    }
 
     const keywordData: any = {
-      keyword: keywordValue.trim()
+      keyword: trimmedKeyword
     };
 
     // Parse search volume if column found
     if (searchVolumeIndex > -1 && cells[searchVolumeIndex]) {
       const volume = parseSearchVolume(cells[searchVolumeIndex]);
       keywordData.monthlySearches = volume;
-      console.log(`[CSV] Keyword: ${keywordData.keyword}, Volume: ${volume} (raw: "${cells[searchVolumeIndex]}")`);
+    }
+
+    // Parse three month change
+    if (threeMonthChangeIndex > -1 && cells[threeMonthChangeIndex]) {
+      keywordData.threeMonthChange = parsePercentage(cells[threeMonthChangeIndex]);
+    }
+
+    // Parse YoY change
+    if (yoyChangeIndex > -1 && cells[yoyChangeIndex]) {
+      keywordData.yoyChange = parsePercentage(cells[yoyChangeIndex]);
     }
 
     if (competitionIndex > -1 && cells[competitionIndex]) {
@@ -365,12 +433,21 @@ function parseCSVLine(line: string): string[] {
   let current = '';
   let inQuotes = false;
 
+  // Detect delimiter: tab or comma
+  // Google Ads exports typically use tabs
+  const hasTabs = line.includes('\t');
+  const hasCommas = line.includes(',');
+  const delimiter = hasTabs ? '\t' : ',';
+
+  // Debug logging
+  console.log('[parseCSVLine] Line length:', line.length, 'hasTabs:', hasTabs, 'hasCommas:', hasCommas, 'first 100 chars:', JSON.stringify(line.substring(0, 100)));
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
 
     if (char === '"') {
       inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
+    } else if (char === delimiter && !inQuotes) {
       result.push(current.trim());
       current = '';
     } else {
@@ -389,10 +466,23 @@ function parseSearchVolume(text: string): number {
   return match ? parseInt(match[1], 10) : 0;
 }
 
+function parsePercentage(text: string): number | null {
+  if (!text || text === '—' || text === '-' || text.trim() === '') return null;
+  const clean = text.replace(/%/g, '').trim();
+  const num = parseFloat(clean);
+  if (isNaN(num)) return null;
+  return num;
+}
+
 function parseBid(text: string): number {
   if (!text || text === '—' || text === '-') return 0;
-  const clean = text.replace(/[^0-9.]/g, '');
-  return parseFloat(clean) || 0;
+  // Remove currency symbols and whitespace, keep only digits and decimal points
+  const clean = text.replace(/[^0-9.,]/g, '').trim();
+  // Handle Indonesian number format (1.000,00 -> 1000.00)
+  // First remove thousand separators (dots), then convert comma to dot for decimal
+  const withThousandSepRemoved = clean.replace(/\./g, '');
+  const normalized = withThousandSepRemoved.replace(',', '.');
+  return parseFloat(normalized) || 0;
 }
 
 function getCompetitionIndex(competition: string): number {
@@ -401,6 +491,15 @@ function getCompetitionIndex(competition: string): number {
   if (lower.includes('sedang') || lower.includes('medium')) return 60;
   if (lower.includes('tinggi') || lower.includes('high')) return 90;
   return 50;
+}
+
+// Format competition label for display
+function formatCompetition(competition: string): string {
+  const lower = competition.toLowerCase();
+  if (lower.includes('rendah') || lower.includes('low')) return 'Rendah';
+  if (lower.includes('sedang') || lower.includes('medium')) return 'Sedang';
+  if (lower.includes('tinggi') || lower.includes('high')) return 'Tinggi';
+  return competition;
 }
 
 // ============ AUTH ROUTES ============
@@ -529,11 +628,26 @@ app.post("/api/keywords/upload", requireAuth, upload.single('csv'), (req: expres
       console.log('[Upload] Detected UTF-8 encoding');
     }
 
+    // Debug: Log first 200 chars of CSV content after decoding
+    const debugLog = `[Upload] CSV content first 300 chars: ${JSON.stringify(csvContent.substring(0, 300))}\n[Upload] CSV includes tabs: ${csvContent.includes('\t')}\n[Upload] CSV includes null bytes: ${csvContent.includes('\0')}\n`;
+    process.stdout.write(debugLog);
+    // Also write to file for debugging
+    const debugPath = path.join(DATA_DIR, 'debug.log');
+    try {
+      fs.appendFileSync(debugPath, `${new Date().toISOString()} - ${debugLog}\n`);
+      process.stdout.write(`[Debug] Successfully wrote to ${debugPath}\n`);
+    } catch (e: any) {
+      process.stdout.write(`[Debug] Failed to write debug log: ${e.message}\n`);
+    }
+
     const keywords = parseCSV(csvContent);
 
     if (keywords.length === 0) {
       return res.status(400).json({ error: "No keywords found in CSV" });
     }
+
+    // Explicitly log before save
+    process.stdout.write(`[Upload] About to save ${keywords.length} keywords...\n`);
 
     const processedData = {
       keywords,
@@ -547,23 +661,29 @@ app.post("/api/keywords/upload", requireAuth, upload.single('csv'), (req: expres
       }
     };
 
-    const savedFilename = saveKeywords(processedData);
+    try {
+      const savedFilename = saveKeywords(processedData);
+      process.stdout.write(`[Upload] saveKeywords returned: ${savedFilename}\n`);
 
-    console.log(`\n========== CSV FILE UPLOADED ==========`);
-    console.log(`Filename: ${filename}`);
-    console.log(`Total Keywords: ${keywords.length}`);
-    console.log(`Uploaded by: ${req.session?.username}`);
-    console.log(`Stored in: ${savedFilename}`);
-    console.log(`======================================\n`);
+      console.log(`\n========== CSV FILE UPLOADED ==========`);
+      console.log(`Filename: ${filename}`);
+      console.log(`Total Keywords: ${keywords.length}`);
+      console.log(`Uploaded by: ${req.session?.username}`);
+      console.log(`Stored in: ${savedFilename}`);
+      console.log(`======================================\n`);
 
-    res.json({
-      success: true,
-      message: `Successfully uploaded ${keywords.length} keywords from CSV`,
-      count: keywords.length,
-      withVolume: keywords.filter((kw: any) => kw.monthlySearches && kw.monthlySearches > 0).length,
-      filename,
-      storedFilename: savedFilename
-    });
+      res.json({
+        success: true,
+        message: `Successfully uploaded ${keywords.length} keywords from CSV`,
+        count: keywords.length,
+        withVolume: keywords.filter((kw: any) => kw.monthlySearches && kw.monthlySearches > 0).length,
+        filename,
+        storedFilename: savedFilename
+      });
+    } catch (saveError: any) {
+      process.stdout.write(`[Upload] saveKeywords error: ${saveError.message}\n`);
+      throw saveError;
+    }
   } catch (error) {
     console.error("Error uploading CSV file:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -650,6 +770,277 @@ app.get("/api/keywords/history", requireAuth, (req: express.Request, res: expres
     });
   } catch (error) {
     console.error("Error getting history:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get all keywords with filtering and pagination
+app.get("/api/keywords", requireAuth, (req: express.Request, res: express.Response) => {
+  try {
+    const history = getKeywordHistory();
+    const allKeywords: any[] = [];
+    const keywordMap = new Map<string, any>();
+
+    // Collect all keywords from all files
+    for (const entry of history) {
+      const filePath = path.join(DATA_DIR, entry.file);
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        for (const kw of data.keywords) {
+          const key = kw.keyword.toLowerCase().trim();
+          if (keywordMap.has(key)) {
+            // Keep the one with higher volume
+            const existing = keywordMap.get(key);
+            if (kw.monthlySearches > existing.monthlySearches) {
+              keywordMap.set(key, {
+                ...kw,
+                sourceFiles: [...(existing.sourceFiles || []), entry.originalFilename]
+              });
+            } else {
+              existing.sourceFiles = [...(existing.sourceFiles || []), entry.originalFilename];
+            }
+          } else {
+            keywordMap.set(key, { ...kw, sourceFiles: [entry.originalFilename] });
+          }
+        }
+      }
+    }
+
+    // Convert map to array
+    for (const kw of keywordMap.values()) {
+      allKeywords.push(kw);
+    }
+
+    // Filter by volume
+    const minVolume = req.query.minVolume ? parseInt(req.query.minVolume as string) : 0;
+    const hasVolume = req.query.hasVolume === 'true';
+    const search = req.query.search as string || '';
+
+    let filtered = allKeywords.filter(kw => {
+      const volume = kw.monthlySearches || 0;
+      if (hasVolume && volume <= 0) return false;
+      if (volume < minVolume) return false;
+      if (search && !kw.keyword.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+
+    // Sort by volume (default: highest first)
+    const sortBy = req.query.sortBy as string || 'volume';
+    const sortOrder = req.query.sortOrder as string || 'desc';
+
+    filtered.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'volume') {
+        cmp = (a.monthlySearches || 0) - (b.monthlySearches || 0);
+      } else if (sortBy === 'keyword') {
+        cmp = a.keyword.localeCompare(b.keyword);
+      } else if (sortBy === 'competition') {
+        cmp = (a.competitionIndex || 0) - (b.competitionIndex || 0);
+      }
+      return sortOrder === 'desc' ? -cmp : cmp;
+    });
+
+    // Pagination
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 50;
+    const totalPages = Math.ceil(filtered.length / pageSize);
+    const start = (page - 1) * pageSize;
+    const paginated = filtered.slice(start, start + pageSize);
+
+    res.json({
+      success: true,
+      keywords: paginated,
+      pagination: {
+        page,
+        pageSize,
+        totalPages,
+        total: filtered.length,
+        hasMore: page < totalPages
+      },
+      stats: {
+        total: allKeywords.length,
+        withVolume: allKeywords.filter(k => k.monthlySearches > 0).length,
+        withoutVolume: allKeywords.filter(k => !k.monthlySearches || k.monthlySearches <= 0).length,
+        duplicates: history.reduce((sum, e) => sum + e.keywordCount, 0) - allKeywords.length
+      }
+    });
+  } catch (error) {
+    console.error("Error getting keywords:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Deduplicate keywords - remove duplicates and keep highest volume
+app.post("/api/keywords/deduplicate", requireAuth, (req: express.Request, res: express.Response) => {
+  try {
+    const history = getKeywordHistory();
+    const keywordMap = new Map<string, any>();
+    let totalDuplicates = 0;
+
+    // Collect all keywords and find duplicates
+    for (const entry of history) {
+      const filePath = path.join(DATA_DIR, entry.file);
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        for (const kw of data.keywords) {
+          const key = kw.keyword.toLowerCase().trim();
+          if (keywordMap.has(key)) {
+            totalDuplicates++;
+            const existing = keywordMap.get(key);
+            if (kw.monthlySearches > existing.monthlySearches) {
+              keywordMap.set(key, kw);
+            }
+          } else {
+            keywordMap.set(key, kw);
+          }
+        }
+      }
+    }
+
+    // Create deduplicated data
+    const deduplicatedKeywords = Array.from(keywordMap.values());
+
+    // Save to new file
+    const dedupData = {
+      keywords: deduplicatedKeywords,
+      metadata: {
+        source: 'Deduplicated',
+        filename: 'deduplicated_keywords.json',
+        extractedTimestamp: null,
+        downloadDate: new Date().toISOString().split('T')[0],
+        receivedAt: new Date().toISOString(),
+        uploadedBy: req.session?.username || "system",
+        isDeduplicated: true,
+        originalCount: history.reduce((sum, e) => sum + e.keywordCount, 0),
+        duplicatesRemoved: totalDuplicates
+      }
+    };
+
+    const savedFilename = saveKeywords(dedupData);
+
+    res.json({
+      success: true,
+      message: `Removed ${totalDuplicates} duplicate keywords`,
+      originalCount: dedupData.metadata.originalCount,
+      deduplicatedCount: deduplicatedKeywords.length,
+      duplicatesRemoved: totalDuplicates,
+      storedFilename: savedFilename
+    });
+  } catch (error) {
+    console.error("Error deduplicating keywords:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Download keywords with selected columns as CSV
+app.post("/api/keywords/download", requireAuth, (req: express.Request, res: express.Response) => {
+  try {
+    const { columns } = req.body;
+
+    if (!Array.isArray(columns) || columns.length === 0) {
+      return res.status(400).json({ error: "Please select at least one column" });
+    }
+
+    const history = getKeywordHistory();
+    const keywordMap = new Map<string, any>();
+
+    // Collect all keywords from all files
+    for (const entry of history) {
+      const filePath = path.join(DATA_DIR, entry.file);
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        for (const kw of data.keywords) {
+          const key = kw.keyword.toLowerCase().trim();
+          if (keywordMap.has(key)) {
+            const existing = keywordMap.get(key);
+            if (kw.monthlySearches > existing.monthlySearches) {
+              keywordMap.set(key, kw);
+            }
+          } else {
+            keywordMap.set(key, kw);
+          }
+        }
+      }
+    }
+
+    const allKeywords = Array.from(keywordMap.values());
+
+    // Define column headers and accessors
+    const columnDefs: { [key: string]: { header: string; accessor: (kw: any) => any } } = {
+      keyword: { header: 'Keyword', accessor: (kw: any) => kw.keyword || '' },
+      monthlySearches: { header: 'Monthly Searches', accessor: (kw: any) => kw.monthlySearches || 0 },
+      threeMonthChange: { header: '3 Month Change (%)', accessor: (kw: any) => kw.threeMonthChange ?? '' },
+      yoyChange: { header: 'YoY Change (%)', accessor: (kw: any) => kw.yoyChange ?? '' },
+      competition: { header: 'Competition', accessor: (kw: any) => kw.competition || '' },
+      lowTopPageBid: { header: 'Low Top Page Bid', accessor: (kw: any) => kw.lowTopPageBid || '' },
+      highTopPageBid: { header: 'High Top Page Bid', accessor: (kw: any) => kw.highTopPageBid || '' }
+    };
+
+    // Build CSV header
+    const csvRows: string[] = [];
+    const headerRow = columns.map(col => columnDefs[col]?.header || col).join(',');
+    csvRows.push(headerRow);
+
+    // Build CSV data rows
+    for (const kw of allKeywords) {
+      const row = columns.map(col => {
+        const value = columnDefs[col]?.accessor(kw);
+        // Escape commas and quotes in values
+        const strValue = String(value ?? '');
+        if (strValue.includes(',') || strValue.includes('"')) {
+          return `"${strValue.replace(/"/g, '""')}"`;
+        }
+        return strValue;
+      }).join(',');
+      csvRows.push(row);
+    }
+
+    const csvContent = csvRows.join('\n');
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="keywords-backup-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csvContent);
+  } catch (error) {
+    console.error("Error downloading keywords:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete all keywords
+app.post("/api/keywords/delete-all", requireAuth, (req: express.Request, res: express.Response) => {
+  try {
+    const history = getKeywordHistory();
+    let deletedCount = 0;
+
+    // Delete all keyword files
+    for (const entry of history) {
+      const filePath = path.join(DATA_DIR, entry.file);
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        deletedCount += data.keywords.length;
+        fs.unlinkSync(filePath);
+        console.log(`[Delete] Deleted file: ${entry.file}`);
+      }
+    }
+
+    // Clear index file
+    const indexPath = path.join(DATA_DIR, "index.json");
+    if (fs.existsSync(indexPath)) {
+      fs.unlinkSync(indexPath);
+      console.log('[Delete] Cleared index file');
+    }
+
+    console.log(`[Delete] Successfully deleted ${deletedCount} keywords from ${history.length} files`);
+
+    res.json({
+      success: true,
+      message: `Successfully deleted ${deletedCount} keywords`,
+      deletedCount,
+      filesDeleted: history.length
+    });
+  } catch (error) {
+    console.error("Error deleting keywords:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
