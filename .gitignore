@@ -1,0 +1,47 @@
+# Environment files (CONTAIN SENSITIVE DATA - NEVER COMMIT)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Docker
+docker/..env
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Extension build
+extension/dist/
+
+# Server build
+server/dist/
+
+# Package lock (optional, choose based on your preference)
+# package-lock.json
+# yarn.lock

@@ -1,0 +1,27 @@
+services:
+  mcp-seo-server:
+    image: mcp-seo-server:latest
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    restart: always
+    expose:
+      - "4000"
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mcp-seo.rule=Host(`seo.modalhp.com`)"
+      - "traefik.http.routers.mcp-seo.entrypoints=websecure"
+      - "traefik.http.routers.mcp-seo.tls=true"
+      - "traefik.http.routers.mcp-seo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mcp-seo.loadbalancer.server.port=4000"
+      - "traefik.http.middlewares.mcp-seo-headers.headers.customrequestheaders.Access-Control-Allow-Origin=*"
+    environment:
+      - PORT=4000
+      - API_KEY=${API_KEY}
+      - NODE_ENV=production
+
+networks:
+  web:
+    external: true
