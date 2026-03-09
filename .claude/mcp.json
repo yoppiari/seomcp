@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "seo-keywords": {
+      "command": "node",
+      "args": ["/home/yopi/Projects/MCP SEO/server/dist/mcp-server.js"],
+      "cwd": "/home/yopi/Projects/MCP SEO/server",
+      "env": {
+        "DATA_DIR": "/home/yopi/Projects/MCP SEO/server/data",
+        "SERVER_URL": "https://seo.modalhp.com",
+        "API_KEY": "2f3bd395c3a85ec7e2b704b57f07dfac0a6d624c13c536479ca5809db202bcd0"
+      }
+    }
+  }
+}

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - MCP SEO</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-header h1 {
+      color: #1a73e8;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .login-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #1a73e8;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1557b0;
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .alert-error {
+      background: #fce8e7;
+      color: #d93025;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert-success {
+      background: #e6f4e8;
+      color: #1e8e3e;
+      border: 1px solid #c3e6cb;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 20px 0;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .link {
+      color: #1a73e8;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    #registerForm {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <h1>MCP SEO</h1>
+      <p>Keyword Management System</p>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <!-- Login Form -->
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="loginUsername">Username</label>
+        <input type="text" id="loginUsername" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <p style="text-align: center; font-size: 14px; color: #666;">
+      Don't have an account? <a class="link" onclick="showRegister()">Register</a>
+    </p>
+
+    <!-- Register Form -->
+    <form id="registerForm" style="margin-top: 20px;">
+      <div class="form-group">
+        <label for="registerUsername">Username</label>
+        <input type="text" id="registerUsername" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="registerPassword">Password</label>
+        <input type="password" id="registerPassword" required autocomplete="new-password">
+      </div>
+
+      <div class="form-group">
+        <label for="registerConfirm">Confirm Password</label>
+        <input type="password" id="registerConfirm" required autocomplete="new-password">
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="registerBtn">Register</button>
+    </form>
+
+    <p style="text-align: center; font-size: 14px; color: #666; margin-top: 20px;">
+      <a class="link" onclick="showLogin()">Back to Login</a>
+    </p>
+  </div>
+
+  <script>
+    const alert = document.getElementById('alert');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+
+    function showAlert(message, type) {
+      alert.textContent = message;
+      alert.className = `alert alert-${type}`;
+      alert.style.display = 'block';
+      setTimeout(() => {
+        alert.style.display = 'none';
+      }, 5000);
+    }
+
+    function showRegister() {
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+    }
+
+    function showLogin() {
+      registerForm.style.display = 'none';
+      loginForm.style.display = 'block';
+    }
+
+    // Check if already logged in
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (res.ok) {
+          window.location.href = '/dashboard';
+        }
+      } catch (e) {
+        // Not logged in
+      }
+    }
+    checkAuth();
+
+    // Login handler
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logging in...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            username: document.getElementById('loginUsername').value,
+            password: document.getElementById('loginPassword').value
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showAlert('Login successful! Redirecting...', 'success');
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 1000);
+        } else {
+          showAlert(data.error || 'Login failed', 'error');
+        }
+      } catch (error) {
+        showAlert('Connection error. Please try again.', 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+      }
+    });
+
+    // Register handler
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const password = document.getElementById('registerPassword').value;
+      const confirm = document.getElementById('registerConfirm').value;
+
+      if (password !== confirm) {
+        showAlert('Passwords do not match', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        showAlert('Password must be at least 6 characters', 'error');
+        return;
+      }
+
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Registering...';
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            username: document.getElementById('registerUsername').value,
+            password: password
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showAlert('Registration successful! Please login.', 'success');
+          setTimeout(() => {
+            showLogin();
+            registerForm.reset();
+          }, 1000);
+        } else {
+          showAlert(data.error || 'Registration failed', 'error');
+        }
+      } catch (error) {
+        showAlert('Connection error. Please try again.', 'error');
+      } finally {
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Register';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -6,14 +6,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install all dependencies including devDependencies
+RUN npm install
 
 # Copy source code
 COPY . .
 
-# Build TypeScript
-RUN npm run build
+# Build TypeScript using node directly
+RUN node node_modules/typescript/bin/tsc
 
 # Production stage
 FROM node:20-alpine
