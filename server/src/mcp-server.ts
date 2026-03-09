@@ -10,11 +10,9 @@ import {
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 
 dotenv.config();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "../data");
 const API_KEY = process.env.API_KEY || "default-key";
 const SERVER_URL = process.env.SERVER_URL || "https://seo.modalhp.com";

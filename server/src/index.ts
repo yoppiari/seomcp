@@ -7,6 +7,14 @@ import multer from "multer";
 import session from "express-session";
 import bcrypt from "bcryptjs";
 
+// Extend express-session types
+declare module "express-session" {
+  interface SessionData {
+    userId: string;
+    username: string;
+  }
+}
+
 dotenv.config();
 
 const PORT = process.env.PORT || 4000;
