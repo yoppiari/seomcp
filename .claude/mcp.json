@@ -9,6 +9,13 @@
         "SERVER_URL": "https://seo.modalhp.com",
         "API_KEY": "2f3bd395c3a85ec7e2b704b57f07dfac0a6d624c13c536479ca5809db202bcd0"
       }
+    },
+    "cloudflare": {
+      "command": "npx",
+      "args": ["-y", "@cloudflare/mcp-server"],
+      "env": {
+        "CLOUDFLARE_API_TOKEN": "3h8h8MMo1oe8vedDXgGyjJG9ECI6CWQWQCbJeWQW"
+      }
     }
   }
 }

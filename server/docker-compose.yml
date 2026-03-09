@@ -5,8 +5,8 @@ services:
     build: .
     container_name: mcp-seo-server
     restart: unless-stopped
-    expose:
-      - "4000"
+    ports:
+      - "4001:4000"
     volumes:
       - ./data:/app/data
     environment:
@@ -16,9 +16,10 @@ services:
       - API_KEY=${API_KEY:-2f3bd395c3a85ec7e2b704b57f07dfac0a6d624c13c536479ca5809db202bcd0}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mcp-seo.rule=Host(`seo.modalhp.com`)"
-      - "traefik.http.routers.mcp-seo.entrypoints=web"
-      - "traefik.http.services.mcp-seo.loadbalancer.server.port=4000"
+      - "traefik.http.routers.mcp-seo-new.rule=Host(`seo.modalhp.com`)"
+      - "traefik.http.routers.mcp-seo-new.entrypoints=websecure"
+      - "traefik.http.routers.mcp-seo-new.tls=false"
+      - "traefik.http.services.mcp-seo-new.loadbalancer.server.port=4000"
     networks:
       - web
 
